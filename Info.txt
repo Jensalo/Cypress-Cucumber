@@ -195,8 +195,25 @@ NOTA: si deja de funcionar jenkis hacer
     *Abre tu navegador e ingresa a:http://localhost:9090
 
 GIT
-1. iniciar una copia y respaldo
+1. Inicializar git
   git init //crea una carpeta git en el proyecto
+
+2. Agregar todos los archivos del proyecto //toma la copia y la agrega
+  git add .
+
+3.  para ver el estado actual de los archivos en repositorio Git.
+  git status
+
+4. commit
+  git commint -m "Inicio del Proyecto" //ejemplo inicio proyecto
+
+5. para cargar informacion 
+  git add *.json => se pueden cargar cualquier tipo de archivos
+  git add "cypress/Carpeta de Prueba"
+  git  => para cargar una carpeta
+  
+
+
 
 
 
