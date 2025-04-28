@@ -1,0 +1,211 @@
+PARA CREAR EL PROYECTO DESDE CERO 
+1. mkdir nombre del proyecto 
+2. cd nombre del proyecto para moverse dentro dela carpeta
+3. npm init -y
+4. Instalacion cypress con este se crea automaticamente el node_modules
+    npm install cypress --save-dev
+
+5. Abrir Cypress por primera vez (esto crea la estructura de carpetas)
+    npx cypress open
+
+6. Instalar Cypress y Cucumber Preprocessor
+    npm install --save-dev @badeball/cypress-cucumber-preprocessor @bahmutov/cypress-esbuild-preprocessor esbuild
+
+7. Configura cypress.config.js
+    crear el archivo cypress.config.js en la raiz del proyecto
+const { defineConfig } = require("cypress");
+const createBundler = require("@bahmutov/cypress-esbuild-preprocessor");
+const { addCucumberPreprocessorPlugin } = require("@badeball/cypress-cucumber-preprocessor");
+const createEsbuildPlugin = require("@badeball/cypress-cucumber-preprocessor/esbuild");
+
+module.exports = defineConfig({
+  e2e: {
+    specPattern: "cypress/e2e/**/*.feature",
+    async setupNodeEvents(on, config) {
+      await addCucumberPreprocessorPlugin(on, config);
+      on("file:preprocessor", createBundler({
+        plugins: [createEsbuildPlugin.default(config)],
+      }));
+
+      config.darkMediaQuery = true;
+      return config;
+    },
+  },
+});
+
+8. Agrega tsconfig.json (opcional pero recomendado)
+En la raíz de tu proyecto:
+{
+  "compilerOptions": {
+    "target": "es6",
+    "lib": ["es6", "dom"],
+    "module": "commonjs",
+    "types": ["cypress"],
+    "esModuleInterop": true
+  },
+  "include": ["cypress/**/*.ts"]
+}
+
+9. Estructura recomendada de carpetas
+  mkdir cypress\e2e\features
+  mkdir cypress\step_definitions
+  mkdir cypress\support
+
+10. crear archivo e2e.js
+  support => e2e.js 
+  // support/e2e.js
+
+import './commands';
+import 'cypress-xpath';
+
+Cypress.on('uncaught:exception', (err, runnable) => {
+  // Retornar false impide que Cypress falle la prueba ante cualquier error no capturado
+  return false;
+});
+
+11. crear archivo commands
+  cypress/support/commands.js
+
+12. instalar el cypress-xpath
+  npm install --save-dev cypress-xpath
+
+13. cuando se requiera abrir la misma pagina en varios step_definitions se crea una archivo comun.js
+  cypress/support/step_definitions/sharedSteps.js (sharedSteps = pasos compartidos)
+  en este caso se almacenara el abrir navegador
+
+  Given("Abrir el navegador principal", () => {
+  cy.visit("https://demoqa.com/text-box");
+  });
+
+  Then('Validar el nombre de la página', () => {
+  cy.title().should('eq', 'DEMOQA');
+  cy.wait(1000);
+  });
+
+14.jenkins es para el paralelismo e integracion, 
+  Es un servidor open source para la integración contigua. Se usa para probar y compilar proyectos de software de forma continua.
+  
+ a. Agregar al cypress.config.js las lineas
+      // 👇 Reporter integrado para generar HTML
+    reporter: "mochawesome",
+    reporterOptions: {
+      reportDir: "cypress/reports",
+      overwrite: false,
+      html: true,
+      json: true,
+    },
+
+b. instalar paquetes 
+  npm install --save-dev mochawesome
+  npm install --save-dev mochawesome-merge mochawesome-report-generator => hacer merge de reportes por test o múltiples browsers
+
+c. crear el archivo Jenkinsfile en la raiz del proyecto y agregar el codigo
+    pipeline {
+    agent any
+
+    tools {
+        nodejs "NodeJS 18" // Debes configurarlo en Jenkins > Global Tool Configuration
+    }
+
+    environment {
+        CI = 'true' // Importante para que Cypress no use GUI
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Instalar dependencias') {
+            steps {
+                bat 'npm install'
+            }
+        }
+
+        stage('Ejecutar pruebas Cypress') {
+            steps {
+                bat 'npx cypress run'
+            }
+        }
+
+        stage('Publicar reporte HTML') {
+            steps {
+                publishHTML(target: [
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'cypress/reports',
+                    reportFiles: 'mochawesome.html',
+                    reportName: 'Reporte Cypress'
+                ])
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline finalizado.'
+        }
+    }
+}
+
+d. para descargar y configurar jenkins
+*crear la carpeta C:\Jenkins
+*descargar jenkins Descargar jenkins.war (LTS)
+*guardarlo como C:\Jenkins\jenkins.war
+* Cambia correctamente a la carpeta desde CMD
+*navega a => cd "C:\ProgramData\Jenkins"
+*Haz clic en la barra de dirección, escribe cmd y presiona Enter
+*Luego en esa nueva terminal, ejecuta: =>java -jar jenkins.war
+*Ejecuta con puerto personalizado => java -jar jenkins.war --httpPort=9090
+*abrir el navegador http://localhost:9090
+*buscar archivo secrets/initialAdminPassword =>C:\Users\salda\.jenkins\secrets\initialAdminPassword
+
+e.  Instalar plugins
+Selecciona "Install suggested plugins"
+Esto instalará los plugins más comunes (como Git, Pipeline, Blue Ocean, etc.), 
+que son más que suficientes para comenzar y necesarios para usar tu Jenkinsfile.
+
+USUARIO: Jensalo
+CONTRASEÑA: Gandalf2025*
+
+f. ingresar administracion de jenkins, plugins disponibles
+plugins =>buscar github organization folder, github integration, github authentication, nodejs, green balls, mock agent
+
+g. configuraciones globales jdk git, nodejs => administracion de jenkins => tools
+  añadir JDK desmarcar instalar automaticamente
+  nombre=> Java_JDK
+  JAVA_HOME => C:\Program Files\Java\jdk-21\ ruta del java aplicar
+
+ h. descargar Git => https://git-scm.com/downloads/win
+    *en la Instalacion aceptar todo y marcar Git from the command line and also from 3rd-party software
+    *en cmd git --version
+*volver a jenkins => Manage Jenkins → Global Tool Configuration → Git
+  GIT => name default
+  Path to Git executable => C:\Program Files\Git\bin\git.exe
+*en cmd adm colocar
+=> git
+=> git config --global user.name "Jensalo"
+=>git config --global user.email "saldarriagalopezjenifer@gmail.com"
+
+NOTA: si deja de funcionar jenkis hacer 
+    *en cmd=> cd..enter =>cd..enter => cd "C:\ProgramData\Jenkins" => net start jenkins
+    *Abre tu navegador e ingresa a:http://localhost:9090
+
+GIT
+1. iniciar una copia y respaldo
+  git init //crea una carpeta git en el proyecto
+
+
+
+
+
+
+
+
+
+
+
+
