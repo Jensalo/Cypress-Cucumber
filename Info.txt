@@ -212,8 +212,11 @@ GIT
   git add "cypress/Carpeta de Prueba"
   git  => para cargar una carpeta
   
+6. el archivo .gitignore no carga al repositorio lo siguiente
 
-
+Repo limpio	Solo subes tu código fuente importante
+Repo liviano	Evitas subir archivos pesados como videos y screenshots
+Repo seguro	No subes contraseñas, APIs, tokens
 
 
 
